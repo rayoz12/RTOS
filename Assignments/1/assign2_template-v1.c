@@ -63,19 +63,19 @@ int main(int argc, char const *argv[]) {
   if(err = pthread_create(&(tid[0]), &attr[0], &ThreadA, (void*)(&params)))
   {
   	perror("Error creating threads: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   if(err = pthread_create(&(tid[1]), &attr[1], &ThreadB, (void*)(&params)))
   {
   	perror("Error creating threads: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   if(err = pthread_create(&(tid[2]), &attr[2], &ThreadC, (void*)(&params)))
   {
   	perror("Error creating threads: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   //TODO: add your code
@@ -99,19 +99,19 @@ void initializeData(ThreadParams *params) {
   if (err = sem_init(&(params->sem_read), 0, 1)) 
   {
   	perror("Error Initialising Sem_Read: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   if (err = sem_init(&(params->sem_justify), 0, 0))
   {
   	perror("Error Initialising Sem_Justify: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   if (err = sem_init(&(params->sem_write), 0, 0))
   {
   	perror("Error Initialising Sem_Write: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   //TODO: add your code
@@ -120,7 +120,7 @@ void initializeData(ThreadParams *params) {
   if (err = pthread_mutex_init(&(params->lock), NULL))
   {
   	perror("Error Initialising Mutex: ");
-  	perror(err);
+  	fprintf(stderr, "Error No. %d", err);
 	exit(-1);
   }
   
@@ -131,10 +131,10 @@ void initializeData(ThreadParams *params) {
 
 void* ThreadA(void *params) {
   //TODO: add your code
+  
   ThreadParams* threadParams = (ThreadParams *) params;
-  
-  
-  
+  sem_wait(threadParams->
+
   while () {
   	
   }
