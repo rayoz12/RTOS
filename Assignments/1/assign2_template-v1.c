@@ -131,12 +131,23 @@ void initializeData(ThreadParams *params) {
 
 void* ThreadA(void *params) {
   //TODO: add your code
-  
   ThreadParams* threadParams = (ThreadParams *) params;
-  sem_wait(threadParams->
+  FILE* fp = fopen("data.txt", "r");
+  if (fp == NULL) {
+    perror("Failed to open data file");
+    exit(-1);
+  }
 
-  while () {
-  	
+  int lineNumber = 0;
+
+  for (;;) {
+    sem_wait(&threadParams->sem_read);
+    pthread_mutex_lock(&threadParams->lock);
+    if ((read = getline(threadParams->message, &len) {
+
+    }
+
+    sem_post(&threadParams->sem_justify)
   }
 }
 
