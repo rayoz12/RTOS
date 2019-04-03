@@ -8,9 +8,11 @@
 /***********************************************************************************/
 
 /*
-  To compile prog_1 ensure that gcc is installed and run the following command:
-  gcc prog_1.c -o prog_1 -lpthread -lrt -Wall
-
+  Building and Running the program is facilitated by a makefile which outputs to assignment2.out:
+  make run
+  OR
+  make build,
+  ./assignment2.out
 */
 #include  <pthread.h>
 #include  <stdlib.h>
@@ -35,7 +37,7 @@ typedef struct ThreadParams {
    * apparently this is not needed, it's given but we don't need to use it. 
    * The semaphores already enforce mutual exclusion for execution of threads and thus resources
    */
-  pthread_mutex_t lock; //
+  pthread_mutex_t lock;
 } ThreadParams;
 
 /* --- Prototypes --- */
@@ -240,7 +242,7 @@ void* ThreadC(void *params) {
       //check if the current line is the end of the header
       //check if we have reached the end of the header, by checking if end header is in the message.
       inContentRegion = strstr(threadParams->message, "end_header") != NULL;
-      inContentRegion ? printf("Entering Content Region\n") : NULL;
+      inContentRegion ? printf("Entering Content Region\n") : 0;
     }
 
     sem_post(&threadParams->sem_read);
