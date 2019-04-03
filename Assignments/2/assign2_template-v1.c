@@ -184,7 +184,7 @@ void* ThreadA(void *params) {
   //Finished Reading file
   
   isfileReadFinished = 1;
-  printf("Finished Reading from file\n");
+  printf("\nFinished Reading from file\n");
   //thread cleanup
   fclose(fp);
 }
