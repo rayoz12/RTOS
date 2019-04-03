@@ -97,6 +97,14 @@ int main(int argc, char const *argv[]) {
 
   printf("Finished\n");
 
+  //cleanup
+  close(params.pipeFile[0]);
+  close(params.pipeFile[1]);
+  
+  sem_destroy(&params.sem_read);
+  sem_destroy(&params.sem_justify);
+  sem_destroy(&params.sem_write);
+
   return 0;
 }
 
@@ -157,31 +165,26 @@ void* ThreadA(void *params) {
     exit(-1);
   }
   printf("Successfully opened file \n");
-  //pipe
-  //close(threadParams->pipeFile[0]); /* we don't want the reading end at all */
 
-  for (;;) {
-    sem_wait(&threadParams->sem_read);
-    printf("\nStarting Iteration %d\n", lineNumber);
-    if ((read = getline(&line, &len, fp)) != -1) {
-      //printf("Read Line: %s \n", line);
-      lineNumber++;
-      
-      if ((result = write(threadParams->pipeFile[1], line, len) < 0)) {
-        perror("Failed to write to pipe!");
-        exit(EXIT_FAILURE);
-      }
-    }
+  while ((read = getline(&line, &len, fp)) != -1) {
+    sem_wait(&threadParams->sem_read); //wait here until other threads signal that they are done
+    //printf("\nStarting Iteration %d\n", lineNumber);
+    //printf("Read Line: %s \n", line);
+    printf("\nRunning thread A\n");
+    lineNumber++;
     
-    sem_post(&threadParams->sem_justify);
-    //break when we are done reading the file
-    if (lineNumber >= 10) {
-      isfileReadFinished = 1;
-      break;
+    if ((result = write(threadParams->pipeFile[1], line, len) < 0)) {
+      perror("Failed to write to pipe!");
+      exit(EXIT_FAILURE);
     }
+    sem_post(&threadParams->sem_justify);
   }
-
+  //Finished Reading file
+  
+  isfileReadFinished = 1;
+  printf("Finished Reading from file\n");
   //thread cleanup
+  fclose(fp);
 }
 
 void* ThreadB(void *params) {
@@ -195,13 +198,13 @@ void* ThreadB(void *params) {
 
   for (;;) {
     sem_wait(&threadParams->sem_justify);
-    printf("Running thread B \n");
+    printf("\nRunning thread B \n");
     //printf("Reading from pipe \n");
     if ((result = read(threadParams->pipeFile[0], threadParams->message, MESSAGE_BUFFER_LENGTH)) < 0) {
       perror("Failed to read Pipe");
       exit(EXIT_FAILURE);
     }
-    printf("Pipe Out: %s \n", threadParams->message);
+    printf("Pipe Out: %s", threadParams->message);
 
     sem_post(&threadParams->sem_write);
 
@@ -223,11 +226,11 @@ void* ThreadC(void *params) {
 
   for (;;) {
     sem_wait(&threadParams->sem_write);
-    printf("Running thread C \n");
+    printf("\nRunning thread C \n");
 
     if (inContentRegion) {
       //write line to file
-      
+      printf("Writing content to file\n");
       if ((result = fprintf(fp, "%s", threadParams->message) < 0)) {
         perror("Failed to write to src.txt file");
         exit(EXIT_FAILURE);
@@ -236,8 +239,8 @@ void* ThreadC(void *params) {
     else {
       //check if the current line is the end of the header
       //check if we have reached the end of the header, by checking if end header is in the message.
-      inContentRegion = strstr(&threadParams->message, "end_header") != NULL;
-      printf("InContentRegion: %d", inContentRegion);
+      inContentRegion = strstr(threadParams->message, "end_header") != NULL;
+      inContentRegion ? printf("Entering Content Region\n") : NULL;
     }
 
     sem_post(&threadParams->sem_read);
@@ -248,4 +251,5 @@ void* ThreadC(void *params) {
   }
 
   //thread cleanup
+  fclose(fp);
 }
