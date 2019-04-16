@@ -1,0 +1,10 @@
+Appearance merits:
+Should just look nice
+
+Usability:
+print usage, add headers to the top of the file
+
+reusability:
+Should be in functions, doens't seem like we have to change much from the template
+
+

@@ -14,6 +14,14 @@
   make build,
   ./assignment2.out
 */
+/*
+  Usage:
+  In your current working directory provide a data.txt input file that contains
+  the input for the program.
+  Then run the program with ./assignment2.out
+  
+  You can print out this usage information by running ./assignment2.out --help
+*/
 #include  <pthread.h>
 #include  <stdlib.h>
 #include  <unistd.h>
@@ -59,8 +67,8 @@ u_int8_t isfileReadFinished = 0;
 
 /* --- Main Code --- */
 int main(int argc, char const *argv[]) {
-  struct timeval t1, t2;
-  gettimeofday(&t1, NULL);  // Start Timer
+  //struct timeval t1, t2;
+  //gettimeofday(&t1, NULL);  // Start Timer
   int err;
   pthread_t tid[3];
   pthread_attr_t attr[3];
@@ -89,7 +97,17 @@ int main(int argc, char const *argv[]) {
 	  exit(-1);
   }
   //TODO: add your code
- 
+  if (argc >= 2)
+  {
+    if (strcmp(argv[1],"--help") == 0)
+    {
+      printf("\
+        Usage: \n\
+	  In your current working directory provide a data.txt input file that contains input for the program. \n\
+  	  Then run the program with ./assignment2.out\n");
+      exit(0);
+    };
+  }
 
   // Wait on threads to finish
   pthread_join(tid[0], NULL);
@@ -187,6 +205,7 @@ void* ThreadA(void *params) {
   printf("\nFinished Reading from file\n");
   //thread cleanup
   fclose(fp);
+  return NULL;
 }
 
 void* ThreadB(void *params) {
@@ -216,6 +235,7 @@ void* ThreadB(void *params) {
   }
 
   //thread cleanup
+  return NULL;
 }
 
 void* ThreadC(void *params) {
@@ -254,4 +274,6 @@ void* ThreadC(void *params) {
 
   //thread cleanup
   fclose(fp);
+  
+  return NULL;
 }
