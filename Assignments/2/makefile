@@ -7,3 +7,4 @@ build: assign2_template-v1.c
  
 run: build
 	./assignment2.out
+

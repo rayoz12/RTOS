@@ -83,30 +83,30 @@ int main(int argc, char const *argv[]) {
   // Create Threads
   if((err = pthread_create(&(tid[0]), &attr[0], &ThreadA, (void*)(&params))) != 0)
   {
-  	perror("Error creating threads: ");
-	  exit(-1);
+	perror("Error creating threads: ");
+	exit(-1);
   }
   if((err = pthread_create(&(tid[1]), &attr[1], &ThreadB, (void*)(&params))) != 0)
   {
-  	perror("Error creating threads: ");
-	  exit(-1);
+	perror("Error creating threads: ");
+	exit(-1);
   }
   if((err = pthread_create(&(tid[2]), &attr[2], &ThreadC, (void*)(&params))) != 0)
   {
-  	perror("Error creating threads: ");
-	  exit(-1);
+	perror("Error creating threads: ");
+	exit(-1);
   }
   //TODO: add your code
   if (argc >= 2)
   {
-    if (strcmp(argv[1],"--help") == 0)
-    {
-      printf("\
-        Usage: \n\
-	  In your current working directory provide a data.txt input file that contains input for the program. \n\
-  	  Then run the program with ./assignment2.out\n");
-      exit(0);
-    };
+	if (strcmp(argv[1],"--help") == 0)
+	{
+		printf("\
+Usage: \n\
+	In your current working directory provide a data.txt input file that contains input for the program. \n\
+	Then run the program with ./assignment2.out\n");
+		exit(0);
+	};
   }
 
   // Wait on threads to finish
@@ -136,30 +136,34 @@ void initializeData(ThreadParams *params) {
    */
   if ((err = sem_init(&(params->sem_read), 0, 1)) != 0)
   {
-  	perror("Error Initialising Sem_Read: ");
-	  exit(-1);
+	perror("Error Initialising Sem_Read: ");
+	exit(-1);
   }
   if ((err = sem_init(&(params->sem_justify), 0, 0)) != 0)
   {
-  	perror("Error Initialising Sem_Justify: ");
+	perror("Error Initialising Sem_Justify: ");
 	  exit(-1);
   }
   if ((err = sem_init(&(params->sem_write), 0, 0)) != 0)
   {
-  	perror("Error Initialising Sem_Write: ");
-	  exit(-1);
+	perror("Error Initialising Sem_Write: ");
+	exit(-1);
   }
   //TODO: add your code
 
   /* Create the mutex lock */
   if ((err = pthread_mutex_init(&(params->lock), NULL)) != 0) 
   {
-  	perror("Error Initialising Mutex: ");
-	  exit(-1);
+	perror("Error Initialising Mutex: ");
+	exit(-1);
   }
   
   //create the pipe
-  pipe(params->pipeFile);
+  if (pipe(params->pipeFile) < 0)
+  {
+	perror("Error Initialising Pipe: ");
+	exit(-1);
+  };
 
   return;
 }
@@ -190,12 +194,12 @@ void* ThreadA(void *params) {
     sem_wait(&threadParams->sem_read); //wait here until other threads signal that they are done
     //printf("\nStarting Iteration %d\n", lineNumber);
     //printf("Read Line: %s \n", line);
-    printf("\nRunning thread A\n");
+    printf("\n------Running thread A------\n");
     lineNumber++;
     
     if ((result = write(threadParams->pipeFile[1], line, len) < 0)) {
-      perror("Failed to write to pipe!");
-      exit(EXIT_FAILURE);
+		perror("Failed to write to pipe!");
+		exit(EXIT_FAILURE);
     }
     sem_post(&threadParams->sem_justify);
   }
@@ -219,13 +223,13 @@ void* ThreadB(void *params) {
 
   for (;;) {
     sem_wait(&threadParams->sem_justify);
-    printf("\nRunning thread B \n");
+    printf("\n------Running thread B------\n");
     //printf("Reading from pipe \n");
     if ((result = read(threadParams->pipeFile[0], threadParams->message, MESSAGE_BUFFER_LENGTH)) < 0) {
       perror("Failed to read Pipe");
       exit(EXIT_FAILURE);
     }
-    printf("Pipe Out: %s", threadParams->message);
+    printf("Pipe Read: %s", threadParams->message);
 
     sem_post(&threadParams->sem_write);
 
@@ -248,7 +252,7 @@ void* ThreadC(void *params) {
 
   for (;;) {
     sem_wait(&threadParams->sem_write);
-    printf("\nRunning thread C \n");
+    printf("\n------Running thread C------\n");
 
     if (inContentRegion) {
       //write line to file
