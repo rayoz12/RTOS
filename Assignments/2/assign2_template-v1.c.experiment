@@ -192,7 +192,7 @@ void* ThreadA(void *params) {
 
 	for (;;) 
 	{
-		sem_wait(&threadParams->sem_read); //wait here until other threads signal that they are done
+		//sem_wait(&threadParams->sem_read); //wait here until other threads signal that they are done
 		printf("\n------Running thread A------\n");
 
 		read = getline(&line, &len, fp);
@@ -202,7 +202,7 @@ void* ThreadA(void *params) {
 		{
 			//Close the write end of the file to signify that we have finished reading from the file and are finished with the pipe.
 			close(threadParams->pipeFile[1]); 
-			sem_post(&threadParams->sem_justify); //signal the next thread
+			//sem_post(&threadParams->sem_justify); //signal the next thread
 			break;
 		}
 		
@@ -211,7 +211,7 @@ void* ThreadA(void *params) {
 			exit(EXIT_FAILURE);
 		}
 		printf("Pipe Write: %s", line);
-		sem_post(&threadParams->sem_justify);
+		//sem_post(&threadParams->sem_justify);
 	}
 	//thread cleanup
 	fclose(fp);
@@ -228,7 +228,7 @@ void* ThreadB(void *params) {
 
 	//exit infinite loop when the Pipe has closed and file read has finished
 	for (;!isfileReadFinished;) {
-		sem_wait(&threadParams->sem_justify);
+		//sem_wait(&threadParams->sem_justify);
 		printf("\n------Running thread B------\n");
 		//printf("Reading from pipe \n");
 		if ((result = read(threadParams->pipeFile[0], threadParams->message, MESSAGE_BUFFER_LENGTH)) < 0) {
@@ -244,7 +244,7 @@ void* ThreadB(void *params) {
 			printf("\nDetected Write pipe is closed! File read finished\n");
 			isfileReadFinished = 1;
 		}
-		sem_post(&threadParams->sem_write);
+		//sem_post(&threadParams->sem_write);
 	}
 
 	printf("[Exit] Thread B has Finished\n");
@@ -262,7 +262,7 @@ void* ThreadC(void *params) {
 	FILE* fp = fopen("src.txt","w");
 
 	for (;isfileReadFinished != 1;) {
-		sem_wait(&threadParams->sem_write);
+		//sem_wait(&threadParams->sem_write);
 		printf("\n------Running thread C------\n");
 
 		if (inContentRegion) {
@@ -280,7 +280,7 @@ void* ThreadC(void *params) {
 			inContentRegion ? printf("Entering Content Region\n") : 0;
 		}
 
-		sem_post(&threadParams->sem_read);
+		//sem_post(&threadParams->sem_read);
 	}
 
 	//thread cleanup
