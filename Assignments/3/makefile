@@ -9,7 +9,7 @@ buildPg2: Assignment3_template_Prg_2.c
 	$(CC) $(CFLAGS) Assignment3_template_Prg_2.c -o Assignment3_template_Prg_2.out $(LIBS)
 
 runPg1: buildPg1
-	./Assignment3_template_Prg_1.out
+	./Assignment3_template_Prg_1.out 4 output.txt
 
 runPg2: buildPg2
 	./Assignment3_template_Prg_2.out

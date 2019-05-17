@@ -31,9 +31,14 @@ Waiting Time(W.T): Time Difference between turn around time and burst time.
 */
 
 typedef struct RR_Params {
-  //add your variables here
-  int quantum_t;
-  //FIFO
+	//add your variables here
+	int quantum_t;
+	//FIFO
+	char* FIFOFile;// = "/tmp/Assignment3RRFIFO";
+
+	//Output File
+	char* OutputFile;
+
 } ThreadParams;
 
 typedef struct Process
@@ -42,14 +47,14 @@ typedef struct Process
 	int pid;
 	//process time
 	int arrive_t, wait_t, burst_t, turnaround_t, remain_t, completion_t;
+
+
 } Process;
 
 //Max number of processes
 #define PROCESSNUM 7
 //Array of processes with 1 extra for placeholder remain_t
 Process Processes[PROCESSNUM + 1];
-//Averages calculated
-double avg_wait_t = 0.0, avg_turnaround_t = 0.0;
 //Semaphore
 sem_t sem_RR;
 
@@ -64,7 +69,7 @@ void remove_element(Process** array, int index, int array_length)
    }
 }
 
-void insert_process(Process** array, Process * process, int* activeProcessIdx, int* activeProcessLen)
+void insert_process(Process** array, Process* process, int* activeProcessIdx, int* activeProcessLen)
 {
 	//shift down
 	for (int i = *activeProcessLen; i > *activeProcessIdx; i--)
@@ -77,18 +82,21 @@ void insert_process(Process** array, Process * process, int* activeProcessIdx, i
 }
 
 /* Initializes data and utilities used in thread params */
-void initializeData(ThreadParams* params)
+void initializeData(ThreadParams* params, int quantum, char* outputFile)
 {
 	int err;
-	params->quantum_t = 4;
+
+	//init params
+	params->quantum_t = quantum;
+	params->FIFOFile = "/tmp/Assignment3RRFIFO";
+	params->OutputFile = outputFile;
+
 
 	if((err = (sem_init(&sem_RR, 0, 0)) !=0))
 	{	
 	    perror("semaphore initialize erro \n");
 	    exit(err);
 	}
-	
-	//init fifo pipe
 
 
 	//init processes
@@ -101,17 +109,47 @@ void initializeData(ThreadParams* params)
 	Processes[6].pid = 7; Processes[6].arrive_t = 26; Processes[6].burst_t = 2;
 	
 	//Initialise remaining time to be same as burst time
-	for (int i = 0; i < PROCESSNUM; i++) {
+	for (int i = 0; i < PROCESSNUM; i++) 
+	{
 		Processes[i].remain_t = Processes[i].burst_t;
 	}
 }
 
+//Send and write average wait time and turnaround time to fifo
+void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) {
+	int res, fifofd;
+	
+	//char* RRFIFO = "/tmp/Assignment3RRFIFO";
+	
+	res = mkfifo(FIFOFile, 0777);
+	
+	if (res < 0) {
+		perror("mkfifo error\n");
+		exit(0);
+	}
+	
+	sem_post(&sem_RR);
+	
+	fifofd = open(FIFOFile, O_WRONLY);
+	
+	if (fifofd < 0) {
+		perror("fifo open send error\n");
+		exit(0);
+	}
+	
+	write(fifofd, &avg_wait_t, sizeof(avg_wait_t));
+	write(fifofd, &avg_turnaround_t, sizeof(avg_turnaround_t));
+	
+	close(fifofd);
+	
+	unlink(FIFOFile);
+}
 
 /* this function calculates CPU RR scheduling, writes waiting time and turn-around time to th FIFO */
 void* worker1(void *params)
 {
    // add your code here
-	ThreadParams* threadParams = (ThreadParams *) params;
+	ThreadParams* threadParams = (ThreadParams*) params;
 
 	Process* activeProcessList[PROCESSNUM];
 	int activeProcessIdx = 0;
@@ -181,7 +219,6 @@ void* worker1(void *params)
 					//since we removed we have to check if he array is empty
 					if (activeProcessLen == 0)
 					{
-						printf("Setting to NULL");
 						activeProcess = NULL;
 						inActiveJob = 0;
 					}
@@ -224,7 +261,7 @@ void* worker1(void *params)
 
 		if (activeProcess == NULL)
 		{
-			printf("CPU Time: %d, CPU IDLE\n", CPUTime);
+			printf("CPUTime: %d, CPU IDLE\n", CPUTime);
 		}
 		else
 		{
@@ -233,10 +270,11 @@ void* worker1(void *params)
 			activeProcess->remain_t--;
 			quantumTimer--;
 		}
-		
-
-		
 	}
+
+	//Averages calculated
+	double avg_wait_t = 0.0f;
+	double avg_turnaround_t = 0.0f;
 
 	//calculate wait and turn around time for each process
 	for (size_t i = 0; i < PROCESSNUM; i++)
@@ -245,24 +283,75 @@ void* worker1(void *params)
 		process.turnaround_t = process.completion_t - process.arrive_t;
 		process.wait_t = process.turnaround_t - process.burst_t;
 		printf("Process ID: %d, Turnaround: %d, Wait: %d\n", process.pid, process.turnaround_t, process.wait_t);
+		avg_turnaround_t += process.turnaround_t;
+		avg_wait_t += process.wait_t;
 	}
 
-	printf("Finished Worker1!\n");
+	avg_turnaround_t /= PROCESSNUM;
+	avg_wait_t /= PROCESSNUM;
+
+	printf("Write to FIFO: Average wait time: %fs\n", avg_wait_t);
+	
+	printf("Write to FIFO: Average turnaround time: %fs\n", avg_turnaround_t);
+
+	sendRRDataFIFO(avg_turnaround_t, avg_wait_t, threadParams->FIFOFile);
+
+	printf("Finished Worker 2\n");
 	
 
 	return NULL;
 }
 
 /* reads the waiting time and turn-around time through the FIFO and writes to text file */
-void* worker2()
+void* worker2(void* params)
 {
-   // add your code here
+	ThreadParams* threadParams = (ThreadParams* ) params;
+   	// add your code here
 
-   return NULL;
+	sem_wait(&sem_RR);
+	printf("Worker thread 2 Started\n");
+
+	int fifofd;
+	
+	double fifo_avg_turnaround_t,
+		fifo_avg_wait_t;
+	
+	//char * RRFIFO = "/tmp/Assignment3RRFIFO";	
+	fifofd = open(threadParams->FIFOFile, O_RDONLY);
+	
+	if (fifofd < 0) {
+		printf("fifo open read error\n");
+		exit(0);
+	}
+	
+	read(fifofd, &fifo_avg_wait_t, sizeof(double));
+	read(fifofd, &fifo_avg_turnaround_t, sizeof(double));
+	
+	printf("Read from FIFO: Average wait time %fs\n", fifo_avg_wait_t);
+	printf("Read from FIFO: Average turnaround time %fs\n", fifo_avg_turnaround_t);
+		
+	close(fifofd);
+	
+	remove(threadParams->FIFOFile);
+
+	FILE* fp = fopen(threadParams->OutputFile, "w");
+	if (fp == NULL) {
+		perror("Failed to open FIFO output file:");
+		exit(-1);
+	}
+
+	fprintf(fp, "Average wait time: %fs \n", fifo_avg_wait_t);
+	fprintf(fp, "Average turnaround time: %fs \n", fifo_avg_turnaround_t);
+
+	fclose(fp);
+
+	printf("Finished Worker 2\n");
+
+   	return NULL;
 }
 
 /* this main function creates named pipe and threads */
-int main(void)
+int main(int argc, char* argv[])
 {
 	int err;
 	pthread_t tid[2];
@@ -274,7 +363,27 @@ int main(void)
 	/* initialize the parameters */
 	 // add your code 
 	
-	initializeData(&params);
+	//get the input data
+
+	if (argc != 3)
+	{
+		printf("\
+Usage: \n\
+	Pass in the time quantum and output file arguments as shown below. \n\
+	./Assignment3_template_Prg1.out quantum outputFile \n\
+	Example:\n\
+	./Assignment3_template_Prg1.out 4 output.txt \n");
+		exit(0);
+	}
+
+	int quantum;
+	sscanf(argv[2], "%d", &quantum);
+	initializeData(&params, quantum, argv[2]);
+
+	//initializeData(&params, 4, "output.txt");
+
+	pthread_attr_init(&attr[0]);
+	pthread_attr_init(&attr[1]);
 
 	/* create threads */
 	 // add your code
