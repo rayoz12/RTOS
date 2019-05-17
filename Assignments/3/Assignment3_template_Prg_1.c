@@ -64,6 +64,18 @@ void remove_element(Process** array, int index, int array_length)
    }
 }
 
+void insert_process(Process** array, Process * process, int* activeProcessIdx, int* activeProcessLen)
+{
+	//shift down
+	for (int i = *activeProcessLen; i > *activeProcessIdx; i--)
+	{
+		array[i] = array[i - 1];
+	}
+	array[*activeProcessIdx] = process;
+	(*activeProcessIdx)++;
+	(*activeProcessLen)++;
+}
+
 /* Initializes data and utilities used in thread params */
 void initializeData(ThreadParams* params)
 {
@@ -130,8 +142,9 @@ void* worker1(void *params)
 			if (process->arrive_t == CPUTime)
 			{
 				printf("Process arrived: %d\n", process->pid);
-				activeProcessList[activeProcessLen] = process;
-				activeProcessLen++;
+				// activeProcessList[activeProcessLen] = process;
+				// activeProcessLen++;
+				insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
 			}
 		}
 
