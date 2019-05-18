@@ -33,8 +33,15 @@ int main(int argc, char* argv[])
 {
 	//Register Ctrl+c(SIGINT) signal and call the signal handler for the function.
 	//add your code here
+	signal(SIGINT, SignalHandler);
 	
-        int i;
+	if (argc < 2)
+	{
+		printf("Please Enter the frame size as an arg");
+		exit(-1);
+	}
+
+    int i;
 	// reference number
 	int REFERENCESTRINGLENGTH=24;
 	//Argument from the user on the frame size, such as 4 frames in the document
@@ -42,13 +49,22 @@ int main(int argc, char* argv[])
 	//Frame where we will be storing the references. -1 is equivalent to an empty value
 	uint frame[REFERENCESTRINGLENGTH];
 	//Reference string from the assignment outline
-	int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1,7,5};
+	//int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1,7,5};
+	int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1};
 	//Next position to write a new value to.
 	int nextWritePosition = 0;
 	//Boolean value for whether there is a match or not.
-	bool match = false;
+	bool inFrame = false;
 	//Current value of the reference string.
 	int currentValue;
+
+
+	//initialise FIFO
+	//FIFO implementation
+	// int startIdx;
+	// int FIFO_SIZE = frameSize; //This is the set size of the FIFO before it will start from the beginning.
+	// int FIFO_BUFFER[REFERENCESTRINGLENGTH]; //set the buffer size for C, up to a max of the reference string Len.
+	 
 
 	//Initialise the empty frame with -1 to simulate empty values.
 	for(i = 0; i < frameSize; i++)
@@ -60,7 +76,38 @@ int main(int argc, char* argv[])
 	for(i = 0; i < REFERENCESTRINGLENGTH; i++)
 	{
 		//add your code here
+		currentValue = referenceString[i];
+		/**
+		 * FIFO Algo 
+		 * Check if the current value is in the frame.
+		 * 	if it is continue on like nothing happened
+		 * 	if not
+		 * 		increment page fault count
+		 * 		Write to frame (based on nextWritePosition)
+		 * 		update nextWritePosition (check if greater than frame size then increment)
+		 * 		
+		 */
 		
+		
+		//check if frame has value
+		inFrame = false;
+		for (int j = 0; j < frameSize; j++)
+		{
+			if (currentValue == frame[j]) {
+				inFrame = true;
+				break;
+			}
+		}
+
+
+		//check if in the frame
+		if (!inFrame)
+		{
+			pageFaults++;
+			frame[nextWritePosition] = currentValue;
+			nextWritePosition = nextWritePosition + 1 >= frameSize ? 0 : nextWritePosition + 1;
+			//activeProcessIdx = activeProcessIdx + 1 >= activeProcessLen ? 0 : activeProcessIdx + 1;
+		}
 	}
 
 	//Sit here until the ctrl+c signal is given by the user.

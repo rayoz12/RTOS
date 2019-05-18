@@ -12,7 +12,7 @@ runPg1: buildPg1
 	./Assignment3_template_Prg_1.out 4 output.txt
 
 runPg2: buildPg2
-	./Assignment3_template_Prg_2.out
+	./Assignment3_template_Prg_2.out 4
 
 debugPg1: buildPg1
 	gdb ./Assignment3_template_Prg_1.out
