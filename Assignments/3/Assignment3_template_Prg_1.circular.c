@@ -60,14 +60,6 @@ sem_t sem_RR;
 
 /* --- Prototypes --- */
 
-/**
- * remove_element
- * @brief Removes a specifed element by index from an array, shifiting elements up to fill the hole.
- * 
- * @param array The array to operator on
- * @param index The index to remove
- * @param array_length the length of the array;
- */
 void remove_element(Process** array, int index, int array_length)
 {
    int i;
@@ -77,15 +69,6 @@ void remove_element(Process** array, int index, int array_length)
    }
 }
 
-/**
- * insert_process
- * @brief Inserts a process at the end of an array of processes, updating the active index and length to emulate a FIFO Queue.
- * 
- * @param array The array of processes to operate on.
- * @param process A pointer to the process to insert
- * @param activeProcessIdx The current active Index 
- * @param activeProcessLen The current length of the address.
- */
 void insert_process(Process** array, Process* process, int* activeProcessIdx, int* activeProcessLen)
 {
 	//shift down
@@ -100,14 +83,6 @@ void insert_process(Process** array, Process* process, int* activeProcessIdx, in
 }
 
 /* Initializes data and utilities used in thread params */
-/**
- * initializeData
- * @brief Initializes data and utilities used in thread params
- * 
- * @param params A pointer to ThreadParms to initialise
- * @param quantum The time quantum to set.
- * @param outputFile The Output file.
- */
 void initializeData(ThreadParams* params, int quantum, char* outputFile)
 {
 	int err;
@@ -142,14 +117,7 @@ void initializeData(ThreadParams* params, int quantum, char* outputFile)
 	}
 }
 
-/**
- * sendRRDataFIFO
- * @brief Send and write average wait time and turnaround time to fifo
- * 
- * @param avg_turnaround_t The turnaround time to send.
- * @param avg_wait_t The wait time to send
- * @param FIFOFile The name of the fifo file to write to.
- */
+//Send and write average wait time and turnaround time to fifo
 void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) {
 	int res, fifofd;
 	
@@ -179,13 +147,7 @@ void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) 
 	unlink(FIFOFile);
 }
 
-/* 
-/**
- * @brief this function calculates CPU RR scheduling, writes waiting time and turn-around time to the FIFO
- * 
- * @param params A pointer to the ThreadParams
- * @return void* Returns null as a the system expects.
- */
+/* this function calculates CPU RR scheduling, writes waiting time and turn-around time to th FIFO */
 void* worker1(void *params)
 {
 	int i;
@@ -223,10 +185,10 @@ void* worker1(void *params)
 			{
 				printf("CPUTime: %d, Process arrived: %d\n", CPUTime, process->pid);
 				//inserts it as if we are tracking a circular buffer.
-				// activeProcessList[activeProcessLen] = process;
-				// activeProcessLen++;
+				activeProcessList[activeProcessLen] = process;
+				activeProcessLen++;
 				//inserts it as if we were tracking a FIFO Queue
-				insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
+				//insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
 			}
 		}
 
@@ -346,13 +308,7 @@ void* worker1(void *params)
 	return NULL;
 }
 
-/* 
-/**
- * @brief reads the waiting time and turn-around time through the FIFO and writes to text file 
- * 
- * @param params The thread params
- * @return void* 
- */
+/* reads the waiting time and turn-around time through the FIFO and writes to text file */
 void* worker2(void* params)
 {
 	ThreadParams* threadParams = (ThreadParams* ) params;
