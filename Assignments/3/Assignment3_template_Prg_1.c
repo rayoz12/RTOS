@@ -183,7 +183,7 @@ void* worker1(void *params)
 			Process* process = &Processes[i];
 			if (process->arrive_t == CPUTime)
 			{
-				printf("Process arrived: %d\n", process->pid);
+				printf("CPUTime: %d, Process arrived: %d\n", CPUTime, process->pid);
 				// activeProcessList[activeProcessLen] = process;
 				// activeProcessLen++;
 				insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
@@ -214,8 +214,8 @@ void* worker1(void *params)
 				if (activeProcess->remain_t == 0)
 				{
 					//job has finished
-					activeProcess->completion_t = CPUTime - 1;
-					//printf("Process Completed: %d, Completetion: %d\n", activeProcess->pid, activeProcess->completion_t);
+					activeProcess->completion_t = CPUTime;
+					printf("CPUTime: %d, Process Completed: %d, Completetion: %d\n", CPUTime, activeProcess->pid, activeProcess->completion_t);
 					
 					//remove from active process, no need to increment.
 					remove_element(activeProcessList, activeProcessIdx, activeProcessLen);
@@ -269,10 +269,10 @@ void* worker1(void *params)
 		}
 		else
 		{
-			printf("CPUTime: %d, Executing Process ID: %d, Remain Time: %d\n", CPUTime, activeProcess->pid, activeProcess->remain_t);
 			//printf("");
 			activeProcess->remain_t--;
 			quantumTimer--;
+			printf("CPUTime: %d, Executing Process ID: %d, Remain Time: %d, Quantum Time: %d\n", CPUTime, activeProcess->pid, activeProcess->remain_t, quantumTimer);
 		}
 	}
 
@@ -381,8 +381,11 @@ Usage: \n\
 	}
 
 	int quantum;
-	sscanf(argv[2], "%d", &quantum);
+	sscanf(argv[1], "%d", &quantum);
 	initializeData(&params, quantum, argv[2]);
+	
+	printf("Quantum Time: %d\n", quantum);
+	printf("Output File: %s\n", argv[2]);
 
 	//initializeData(&params, 4, "output.txt");
 
