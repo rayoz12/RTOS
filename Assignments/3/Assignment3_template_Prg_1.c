@@ -72,7 +72,8 @@ void remove_element(Process** array, int index, int array_length)
 void insert_process(Process** array, Process* process, int* activeProcessIdx, int* activeProcessLen)
 {
 	//shift down
-	for (int i = *activeProcessLen; i > *activeProcessIdx; i--)
+	int i;
+	for (i = *activeProcessLen; i > *activeProcessIdx; i--)
 	{
 		array[i] = array[i - 1];
 	}
@@ -109,7 +110,8 @@ void initializeData(ThreadParams* params, int quantum, char* outputFile)
 	Processes[6].pid = 7; Processes[6].arrive_t = 26; Processes[6].burst_t = 2;
 	
 	//Initialise remaining time to be same as burst time
-	for (int i = 0; i < PROCESSNUM; i++) 
+	int i;
+	for (i = 0; i < PROCESSNUM; i++) 
 	{
 		Processes[i].remain_t = Processes[i].burst_t;
 	}
@@ -148,7 +150,8 @@ void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) 
 /* this function calculates CPU RR scheduling, writes waiting time and turn-around time to th FIFO */
 void* worker1(void *params)
 {
-   // add your code here
+	int i;
+   	// add your code here
 	ThreadParams* threadParams = (ThreadParams*) params;
 
 	Process* activeProcessList[PROCESSNUM];
@@ -174,7 +177,8 @@ void* worker1(void *params)
 		 */
 
 		//check if any processes have arrived
-		for (size_t i = 0; i < PROCESSNUM; i++)
+		
+		for (i = 0; i < PROCESSNUM; i++)
 		{
 			Process* process = &Processes[i];
 			if (process->arrive_t == CPUTime)
@@ -188,7 +192,7 @@ void* worker1(void *params)
 
 		//check if we have finished
 		int finished = 1;
-		for (size_t i = 0; i < PROCESSNUM; i++)
+		for (i = 0; i < PROCESSNUM; i++)
 		{
 			if (Processes[i].remain_t != 0)
 			{
@@ -277,7 +281,7 @@ void* worker1(void *params)
 	double avg_turnaround_t = 0.0f;
 
 	//calculate wait and turn around time for each process
-	for (size_t i = 0; i < PROCESSNUM; i++)
+	for (i = 0; i < PROCESSNUM; i++)
 	{
 		Process process = Processes[i];
 		process.turnaround_t = process.completion_t - process.arrive_t;

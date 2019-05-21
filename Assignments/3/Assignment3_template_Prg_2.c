@@ -91,7 +91,8 @@ int main(int argc, char* argv[])
 		
 		//check if frame has value
 		inFrame = false;
-		for (int j = 0; j < frameSize; j++)
+		int j;
+		for (j = 0; j < frameSize; j++)
 		{
 			if (currentValue == frame[j]) {
 				inFrame = true;
@@ -126,6 +127,6 @@ int main(int argc, char* argv[])
  */
 void SignalHandler(int signal)
 {
-	printf("\nTotal page faults: %d\n", pageFaults);
+	printf("\nTotal page faults: %d\n", pageFaults + 1); //account for starting from 0
 	exit(0);
 }
