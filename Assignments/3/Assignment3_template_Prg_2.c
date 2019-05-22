@@ -4,6 +4,34 @@
 *
 */
 
+/**
+ * @file Assignment3_template_Prg_2.c
+ * @author Ryan Pereira 98112939
+ * @brief 
+ * @version 0.1
+ * @date 2019-05-22
+ * 
+ * This program is an implementation of the FIFO Virtual memory page replacement algorithim. 
+ */
+
+/*
+	Building and Running the program is facilitated by a makefile which outputs to Assignment3_template_Prg_2.out:
+	make runPg2
+	OR
+	make buildPg2,
+	./Assignment3_template_Prg_2.out 4
+	OR
+	gcc -g -Wall Assignment3_template_Prg_2.c -o Assignment3_template_Prg_2.out -pthread
+	./Assignment3_template_Pg_2.out 4
+*/
+/*
+Usage:
+	Pass in the time quantum and output file arguments as shown below.
+	./Assignment3_template_Prg2.out frameSize
+	Example:
+	./Assignment3_template_Prg2.out 4
+*/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
@@ -37,8 +65,13 @@ int main(int argc, char* argv[])
 	
 	if (argc < 2)
 	{
-		printf("Please Enter the frame size as an arg");
-		exit(-1);
+		printf("\
+Usage: \n\
+	Pass in the frame size arguments as shown below. \n\
+	./Assignment3_template_Prg2.out frameSize \n\
+	Example:\n\
+	./Assignment3_template_Prg2.out 4 \n");
+		exit(0);
 	}
 
     int i;
@@ -49,8 +82,7 @@ int main(int argc, char* argv[])
 	//Frame where we will be storing the references. -1 is equivalent to an empty value
 	uint frame[REFERENCESTRINGLENGTH];
 	//Reference string from the assignment outline
-	//int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1,7,5};
-	int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1};
+	int referenceString[24] = {7,0,1,2,0,3,0,4,2,3,0,3,0,3,2,1,2,0,1,7,0,1,7,5};
 	//Next position to write a new value to.
 	int nextWritePosition = 0;
 	//Boolean value for whether there is a match or not.
@@ -58,13 +90,6 @@ int main(int argc, char* argv[])
 	//Current value of the reference string.
 	int currentValue;
 
-
-	//initialise FIFO
-	//FIFO implementation
-	// int startIdx;
-	// int FIFO_SIZE = frameSize; //This is the set size of the FIFO before it will start from the beginning.
-	// int FIFO_BUFFER[REFERENCESTRINGLENGTH]; //set the buffer size for C, up to a max of the reference string Len.
-	 
 
 	//Initialise the empty frame with -1 to simulate empty values.
 	for(i = 0; i < frameSize; i++)
@@ -89,7 +114,7 @@ int main(int argc, char* argv[])
 		 */
 		
 		
-		//check if frame has value
+		//check if frame has the value.
 		inFrame = false;
 		int j;
 		for (j = 0; j < frameSize; j++)
@@ -101,15 +126,16 @@ int main(int argc, char* argv[])
 		}
 
 
-		//check if in the frame
+		//If it isn't in the frame we have a page fault and place it at the oldest point in the array
 		if (!inFrame)
 		{
 			pageFaults++;
 			frame[nextWritePosition] = currentValue;
 			nextWritePosition = nextWritePosition + 1 >= frameSize ? 0 : nextWritePosition + 1;
-			//activeProcessIdx = activeProcessIdx + 1 >= activeProcessLen ? 0 : activeProcessIdx + 1;
 		}
 	}
+
+	printf("Waiting for Signal Interrupt\n");
 
 	//Sit here until the ctrl+c signal is given by the user.
 	while(1)
@@ -127,6 +153,6 @@ int main(int argc, char* argv[])
  */
 void SignalHandler(int signal)
 {
-	printf("\nTotal page faults: %d\n", pageFaults + 1); //account for starting from 0
+	printf("\nTotal page faults: %d\n", pageFaults); //account for starting from 0
 	exit(0);
 }

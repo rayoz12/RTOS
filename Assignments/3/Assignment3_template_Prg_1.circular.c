@@ -1,7 +1,38 @@
 /* 
 * RTOS Autumn 2019
 * Assignment 3 Program_1 template
-*
+* Ryan Pereira - 090186
+*/
+
+/**
+ * @file Assignment3_template_Prg_1.circular.c
+ * @author Ryan Pereira
+ * @brief 
+ * @version 0.1
+ * @date 2019-05-22
+ * 
+ * This is an implementation of the round robin scheduling algorithm using a *circular buffer*. 
+ * This was my initial implementation as it's easier to keep track of a circular buffer. 
+ * The main changes to implementation are how I insert an arriving process and update my tracking variables.
+ * This is viewable on Line 256.
+ */
+
+/*
+	Building and Running the program is facilitated by a makefile which outputs to Assignment3_template_Pg_1.out:
+	make runPg1
+	OR
+	make buildPg1,
+	./Assignment3_template_Pg_1.out
+	OR
+	gcc -g -Wall Assignment3_template_Prg_1.c -o Assignment3_template_Prg_1.out -pthread
+	./Assignment3_template_Pg_1.out
+*/
+/*
+Usage:
+	Pass in the time quantum and output file arguments as shown below.
+	./Assignment3_template_Prg1.out quantum outputFile
+	Example:
+	./Assignment3_template_Prg1.out 4 output.txt
 */
 
 #include <pthread.h> 	/* pthread functions and data structures for pipe */
@@ -60,6 +91,14 @@ sem_t sem_RR;
 
 /* --- Prototypes --- */
 
+/**
+ * remove_element
+ * @brief Removes a specifed element by index from an array, shifiting elements up to fill the hole.
+ * 
+ * @param array The array to operator on
+ * @param index The index to remove
+ * @param array_length the length of the array;
+ */
 void remove_element(Process** array, int index, int array_length)
 {
    int i;
@@ -69,6 +108,15 @@ void remove_element(Process** array, int index, int array_length)
    }
 }
 
+/**
+ * insert_process
+ * @brief Inserts a process at the end of an array of processes, updating the active index and length to emulate a FIFO Queue.
+ * 
+ * @param array The array of processes to operate on.
+ * @param process A pointer to the process to insert
+ * @param activeProcessIdx The current active Index 
+ * @param activeProcessLen The current length of the address.
+ */
 void insert_process(Process** array, Process* process, int* activeProcessIdx, int* activeProcessLen)
 {
 	//shift down
@@ -83,6 +131,14 @@ void insert_process(Process** array, Process* process, int* activeProcessIdx, in
 }
 
 /* Initializes data and utilities used in thread params */
+/**
+ * initializeData
+ * @brief Initializes data and utilities used in thread params
+ * 
+ * @param params A pointer to ThreadParms to initialise
+ * @param quantum The time quantum to set.
+ * @param outputFile The Output file.
+ */
 void initializeData(ThreadParams* params, int quantum, char* outputFile)
 {
 	int err;
@@ -117,7 +173,14 @@ void initializeData(ThreadParams* params, int quantum, char* outputFile)
 	}
 }
 
-//Send and write average wait time and turnaround time to fifo
+/**
+ * sendRRDataFIFO
+ * @brief Send and write average wait time and turnaround time to fifo
+ * 
+ * @param avg_turnaround_t The turnaround time to send.
+ * @param avg_wait_t The wait time to send
+ * @param FIFOFile The name of the fifo file to write to.
+ */
 void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) {
 	int res, fifofd;
 	
@@ -147,7 +210,12 @@ void sendRRDataFIFO(double avg_turnaround_t, double avg_wait_t, char* FIFOFile) 
 	unlink(FIFOFile);
 }
 
-/* this function calculates CPU RR scheduling, writes waiting time and turn-around time to th FIFO */
+/**
+ * @brief this function calculates CPU RR scheduling, writes waiting time and turn-around time to the FIFO
+ * 
+ * @param params A pointer to the ThreadParams
+ * @return void* Returns null as a the system expects.
+ */
 void* worker1(void *params)
 {
 	int i;
@@ -188,7 +256,7 @@ void* worker1(void *params)
 				activeProcessList[activeProcessLen] = process;
 				activeProcessLen++;
 				//inserts it as if we were tracking a FIFO Queue
-				//insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
+				// insert_process(activeProcessList, process, &activeProcessIdx, &activeProcessLen);
 			}
 		}
 
@@ -217,7 +285,7 @@ void* worker1(void *params)
 				{
 					//job has finished
 					activeProcess->completion_t = CPUTime;
-					printf("CPUTime: %d, Process Completed: %d, Completetion: %d\n", CPUTime, activeProcess->pid, activeProcess->completion_t);
+					printf("CPUTime: %d, Process Completed: %d\n", CPUTime, activeProcess->pid);
 					
 					//remove from active process, no need to increment.
 					remove_element(activeProcessList, activeProcessIdx, activeProcessLen);
@@ -271,7 +339,6 @@ void* worker1(void *params)
 		}
 		else
 		{
-			//printf("");
 			activeProcess->remain_t--;
 			quantumTimer--;
 			printf("CPUTime: %d, Executing Process ID: %d, Remain Time: %d, Quantum Time: %d\n", CPUTime, activeProcess->pid, activeProcess->remain_t, quantumTimer);
@@ -302,15 +369,21 @@ void* worker1(void *params)
 
 	sendRRDataFIFO(avg_turnaround_t, avg_wait_t, threadParams->FIFOFile);
 
-	printf("Finished Worker 2\n");
+	printf("Finished Worker 1\n");
 	
 
 	return NULL;
 }
 
-/* reads the waiting time and turn-around time through the FIFO and writes to text file */
+/**
+ * @brief reads the waiting time and turn-around time through the FIFO and writes to text file 
+ * 
+ * @param params The thread params
+ * @return void* 
+ */
 void* worker2(void* params)
 {
+	int err;
 	ThreadParams* threadParams = (ThreadParams* ) params;
    	// add your code here
 
@@ -326,20 +399,28 @@ void* worker2(void* params)
 	fifofd = open(threadParams->FIFOFile, O_RDONLY);
 	
 	if (fifofd < 0) {
-		printf("fifo open read error\n");
+		perror("fifo open read error\n");
 		exit(0);
 	}
 	
-	read(fifofd, &fifo_avg_wait_t, sizeof(double));
-	read(fifofd, &fifo_avg_turnaround_t, sizeof(double));
-	
+	if ((err = (read(fifofd, &fifo_avg_wait_t, sizeof(double)))) < 0) {
+		perror("Failed to read Average Wait time from FIFO:");
+		exit(0);
+	}
+	if ((err = (read(fifofd, &fifo_avg_turnaround_t, sizeof(double)))) < 0) {
+		perror("Failed to read average turnaround time from FIFO:");
+		exit(0);
+	}
+
 	printf("Read from FIFO: Average wait time %fs\n", fifo_avg_wait_t);
 	printf("Read from FIFO: Average turnaround time %fs\n", fifo_avg_turnaround_t);
-		
+
+	//close fifo	
 	close(fifofd);
-	
+	//remove the file
 	remove(threadParams->FIFOFile);
 
+	//open the output file
 	FILE* fp = fopen(threadParams->OutputFile, "w");
 	if (fp == NULL) {
 		perror("Failed to open FIFO output file:");
@@ -360,16 +441,11 @@ void* worker2(void* params)
 int main(int argc, char* argv[])
 {
 	int err;
+	//The Threads
 	pthread_t tid[2];
+	//The attributes for the threads
 	pthread_attr_t attr[2];
 	ThreadParams params;
-	/* creating a named pipe(FIFO) with read/write permission */
-	// add your code 
-
-	/* initialize the parameters */
-	 // add your code 
-	
-	//get the input data
 
 	if (argc != 3)
 	{
@@ -382,6 +458,9 @@ Usage: \n\
 		exit(0);
 	}
 
+	/* creating a named pipe(FIFO) with read/write permission */
+	/* initialize the parameters */
+	// Get the input data
 	int quantum;
 	sscanf(argv[1], "%d", &quantum);
 	initializeData(&params, quantum, argv[2]);
@@ -391,6 +470,7 @@ Usage: \n\
 
 	//initializeData(&params, 4, "output.txt");
 
+	//Initialise the thread attributes
 	pthread_attr_init(&attr[0]);
 	pthread_attr_init(&attr[1]);
 
@@ -407,19 +487,19 @@ Usage: \n\
 	    return err;
 	}
 	
+	/* wait for the thread to exit */
+	//add your code
 	if((err = (pthread_join(tid[0], NULL)!=0)))
 	{
 	    perror("join thread 1 error\n");
-	    return -3;
+	    return err;
 	}
 	if((err = (pthread_join(tid[1], NULL)!=0)))
 	{
 	    printf("join thread 2 error\n");
-	    return -4;
+	    return err;
 	}
 
-	/* wait for the thread to exit */
-	//add your code
 	
 	return 0;
 }
