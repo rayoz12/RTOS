@@ -221,9 +221,12 @@ void* worker1(void *params)
    	// add your code here
 	ThreadParams* threadParams = (ThreadParams*) params;
 
+	//Ready queue as an array of pointers
 	Process* activeProcessList[PROCESSNUM];
+	//the current active process index. (the process at the front of the queue)
 	int activeProcessIdx = 0;
-	int activeProcessLen = 0;
+	int activeProcessLen = 0; //the length of the length
+	//A pointer to the current active process
 	Process* activeProcess = NULL;
 	//if we are currently in a process.
 	int inActiveJob = 0;
@@ -464,8 +467,8 @@ Usage: \n\
 	sscanf(argv[1], "%d", &quantum);
 	initializeData(&params, quantum, argv[2]);
 	
-	printf("Quantum Time: %d\n", quantum);
-	printf("Output File: %s\n", argv[2]);
+	// printf("Quantum Time: %d\n", quantum);
+	// printf("Output File: %s\n", argv[2]);
 
 	//initializeData(&params, 4, "output.txt");
 
